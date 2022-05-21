@@ -10,6 +10,7 @@ resource "aws_vpc" "eks" {
   instance_tenancy = "default"
 
   tags = {
+    "kubernetes.io/cluster/${var.eks_cluster_name}" = "shared"
     Name = var.vpc_name
     Env  = "Prod"
   }
@@ -32,6 +33,8 @@ resource "aws_subnet" "eks_private_subnet" {
   availability_zone = element(var.private_az,count.index)
   
   tags = {
+    "kubernetes.io/cluster/${var.eks_cluster_name}" = "shared"
+    "kubernetes.io/role/internal-elb" = 1
     Name = local.private_subnet_name
   }
 }
@@ -44,18 +47,62 @@ resource "aws_subnet" "eks_public_subnet" {
   availability_zone = element(var.public_az,count.index)
 
   tags = {
+    "kubernetes.io/cluster/${var.eks_cluster_name}" = "shared"
+    "kubernetes.io/role/elb" = 1
     Name = local.public_subnet_name
   }
 }
 
+resource "aws_eip" "nat_gateway" {
+  vpc      = true
+}
+resource "aws_nat_gateway" "ngw" {
+  allocation_id = aws_eip.nat_gateway.id
+  subnet_id  = aws_subnet.eks_public_subnet[0].id
 
-# # Public subnet B
-# resource "aws_subnet" "eks" {
-#   vpc_id     = aws_vpc.eks.id
-#   cidr_block = "10.0.1.0/24"
+  tags = {
+    Name = "NAT Gateway"
+  }
 
-#   tags = {
-#     Name = "Public_subnet_B"
-#   }
-# }
+  # To ensure proper ordering, it is recommended to add an explicit dependency
+  # on the Internet Gateway for the VPC.
+  depends_on = [aws_internet_gateway.eks_igw]
+}
 
+resource "aws_route_table" "public_rtb" {
+  vpc_id = aws_vpc.eks.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.eks_igw.id
+  }
+
+  tags = {
+    Name = "Public"
+  }
+}
+
+resource "aws_route_table_association" "pub_subnets" {
+  count = length(var.public_cidr_block)
+  subnet_id      = element(aws_subnet.eks_public_subnet.*.id, count.index)
+  route_table_id = aws_route_table.public_rtb.id
+}
+
+resource "aws_route_table" "private_rtb" {
+  vpc_id = aws_vpc.eks.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.ngw.id
+  }
+
+  tags = {
+    Name = "Private"
+  }
+}
+
+resource "aws_route_table_association" "private_subnets" {
+  count = length(var.private_cidr_block)
+  subnet_id      = element(aws_subnet.eks_private_subnet.*.id, count.index)
+  route_table_id = aws_route_table.private_rtb.id
+}

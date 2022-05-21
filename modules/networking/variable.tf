@@ -36,3 +36,8 @@ variable "private_az" {
     description = "These are the availabity zones for the private subnets"
     default = [ "ca-central-1a", "ca-central-1d" ]
 }
+
+variable "eks_cluster_name" {
+    description = "The name of EKS cluster"
+    type = string
+}

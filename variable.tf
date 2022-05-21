@@ -12,3 +12,8 @@ variable "igw_name" {
   type        = string
   description = "This is the name of the internet gateway for the eks cluster"
 }
+
+variable "eks_cluster_name" {
+  description = "The name of EKS cluster"
+  type        = string
+}
