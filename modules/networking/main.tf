@@ -6,10 +6,10 @@ locals {
 
 # VPC for EKS cluster
 resource "aws_vpc" "eks" {
-  cidr_block       = var.vpc_cidr
-  instance_tenancy = "default"
+  cidr_block           = var.vpc_cidr
+  instance_tenancy     = "default"
   enable_dns_hostnames = true
-  enable_dns_support = true
+  enable_dns_support   = true
 
   tags = {
     "kubernetes.io/cluster/${var.eks_cluster_name}" = "shared"
