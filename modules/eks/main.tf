@@ -5,8 +5,8 @@ resource "aws_eks_cluster" "Cali-eks" {
   enabled_cluster_log_types = ["api", "audit"]
   role_arn                  = aws_iam_role.eks_cluster_iam_role.arn
   vpc_config {
-    subnet_ids = concat(var.aws_priv_subnet1_id, var.aws_pub_subnet1_id)
-    security_group_ids        = [aws_security_group.eks_SG.id]
+    subnet_ids         = concat(var.aws_priv_subnet1_id, var.aws_pub_subnet1_id)
+    security_group_ids = [aws_security_group.eks_SG.id]
   }
 
   # Ensure that IAM Role permissions are created before and deleted after EKS Cluster handling.

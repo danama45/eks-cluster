@@ -12,5 +12,5 @@ module "eks" {
   aws_priv_subnet1_id = module.networking.private_subnet_ids
   aws_pub_subnet1_id  = module.networking.public_subnet_ids
   eks_cluster_name = var.eks_cluster_name
-
+region =var.region
 }
